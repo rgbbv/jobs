@@ -6,11 +6,39 @@ const lib = require('../lib');
 
 module.exports = { validateDigestArgs, getDigest };
 
-const help = 'Usage: node cli/index.js --getDigest --repo=<repoName> --tag=<tagName>';
+const helpDigest = 'Usage: node cli/index.js --getDigest --repo=<repoName> --tag=<tagName>';
+const helpTags = 'Usage: node cli/index.js --getTags --repo=<repoName>';
 
 if (args.help || args.h) {
-  console.log(help);
+  console.log(helpDigest);
+  console.log(helpTags)
   process.exit(0);
+}
+
+async function getTags(repo) {
+  try {
+    const tags = await lib.getDockerContentTags(repo);
+    console.log(chalk.green(`Fetched tags for ${repo}:`));
+    tags.array.forEach((tag, index) => {
+      console.log(`${index}) ${tag}`)
+    });
+    return tags;
+  } catch (error) {
+    if (error.statusCode === 401) {
+      console.log(`Repo ${repo} does not exist on this Docker Hub registry account.`);
+    } else {
+      throw error;
+    }
+  }
+}
+
+function validateTagsArgs(args) {
+  if (typeof args.repo === 'string') {
+    return true;
+  }
+  console.log(chalk.red('Please provide both repo name and tag'));
+  console.log(helpTags);
+  return false;
 }
 
 async function getDigest(repo, tag) {
@@ -34,13 +62,14 @@ function validateDigestArgs(args) {
     return true;
   }
   console.log(chalk.red('Please provide both repo name and tag'));
-  console.log(help);
+  console.log(helpDigest);
   return false;
 }
 
 async function init() {
   if (args.help || args.h) {
-    console.log(help);
+    console.log(helpDigest);
+    console.log(helpTags)
     return 0;
   }
   if (args.getDigest) {
@@ -48,8 +77,14 @@ async function init() {
       return 1;
     }
     await getDigest(args.repo, args.tag);
+  } else if (args.getTags) {
+    if (!validateTagsArgs(args)) {
+      return 1;
+    }
+    await getTags(args.repo);
   } else {
-    console.log(help);
+    console.log(helpDigest);
+    console.log(helpTags);
   }
   return 0;
 }
