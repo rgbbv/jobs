@@ -4,7 +4,7 @@ const args = require('minimist')(process.argv.slice(2));
 const chalk = require('chalk');
 const lib = require('../lib');
 
-module.exports = { validateDigestArgs, getDigest };
+module.exports = { validateDigestArgs, validateTagsArgs, getDigest, getTags };
 
 const helpDigest = 'Usage: node cli/index.js --getDigest --repo=<repoName> --tag=<tagName>';
 const helpTags = 'Usage: node cli/index.js --getTags --repo=<repoName>';
@@ -19,10 +19,11 @@ async function getTags(repo) {
   try {
     const tags = await lib.getDockerContentTags(repo);
     console.log(chalk.green(`Fetched tags for ${repo}:`));
-    tags.array.forEach((tag, index) => {
-      console.log(`${index}) ${tag}`)
+    const parseTags = JSON.parse(tags).tags
+    parseTags.forEach((tag, index) => {
+      console.log(`- ${tag}`)
     });
-    return tags;
+    return parseTags;
   } catch (error) {
     if (error.statusCode === 401) {
       console.log(`Repo ${repo} does not exist on this Docker Hub registry account.`);
@@ -36,7 +37,7 @@ function validateTagsArgs(args) {
   if (typeof args.repo === 'string') {
     return true;
   }
-  console.log(chalk.red('Please provide both repo name and tag'));
+  console.log(chalk.red('Please provide repo name'));
   console.log(helpTags);
   return false;
 }
