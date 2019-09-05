@@ -3,11 +3,12 @@
 const args = require('minimist')(process.argv.slice(2));
 const chalk = require('chalk');
 const lib = require('../lib');
+const _ = require('lodash');
 
 module.exports = { validateDigestArgs, validateTagsArgs, getDigest, getTags };
 
 const helpDigest = 'Usage: node cli/index.js --getDigest --repo=<repoName> --tag=<tagName>';
-const helpTags = 'Usage: node cli/index.js --getTags --repo=<repoName>';
+const helpTags = 'Usage: node cli/index.js --getTags --repo=<repoName> --search==<tagNameSubstring> (optional)';
 
 if (args.help || args.h) {
   console.log(helpDigest);
@@ -15,11 +16,11 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-async function getTags(repo) {
+async function getTags(repo, start) {
   try {
     const tags = await lib.getDockerContentTags(repo);
     console.log(chalk.green(`Fetched tags for ${repo}:`));
-    const parseTags = JSON.parse(tags).tags
+    const parseTags = start ? JSON.parse(tags).tags.filter( tag => tag.includes(start)) : JSON.parse(tags).tags 
     parseTags.forEach((tag, index) => {
       console.log(`- ${tag}`)
     });
@@ -82,7 +83,7 @@ async function init() {
     if (!validateTagsArgs(args)) {
       return 1;
     }
-    await getTags(args.repo);
+    await getTags(args.repo, args.start);
   } else {
     console.log(helpDigest);
     console.log(helpTags);
