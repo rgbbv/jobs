@@ -18,9 +18,9 @@ jest.mock('../../lib/index.js', () => ({
 
 describe('test getTags', () => {
     test('valid repo and tag', async () => {
-    getDockerContentTags.mockReturnValueOnce('sha256:abcd');
+    getDockerContentTags.mockReturnValueOnce('{"tags": [ "test" ] }');
     const args = { repo: 'alpine' };
-    expect(await getTags(args.repo, args.tag)).toEqual('sha256:abcd');
+    expect(await getTags(args.repo, args.tag)).toEqual(["test"]);
   });
   test('handles unknown error', async () => {
     getDockerContentTags.mockRejectedValue(new Error());
