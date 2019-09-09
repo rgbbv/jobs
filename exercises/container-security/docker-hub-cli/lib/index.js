@@ -34,7 +34,21 @@ async function getDockerContentTags(repo) {
       Authorization: 'Bearer ' + token
     },
   });
+  content = JSON.parse(response.body)
+  content.link = response.headers.link
   return (
-    response.body
+    content
+  );
+}
+
+async function getMoreDockerContentTags(link) {
+  const response = await require({
+    url: tagsUrl,
+    resolveWithFullResponse: true,
+  });
+  content = JSON.parse(response.body)
+  content.link = response.headers.link
+  return (
+    content
   );
 }

@@ -4,6 +4,7 @@ const args = require('minimist')(process.argv.slice(2));
 const chalk = require('chalk');
 const lib = require('../lib');
 const _ = require('lodash');
+const keypress = require('keypress');
 
 module.exports = { validateDigestArgs, validateTagsArgs, getDigest, getTags };
 
@@ -18,13 +19,30 @@ if (args.help || args.h) {
 
 async function getTags(repo, start) {
   try {
-    const tags = await lib.getDockerContentTags(repo);
+    const content = await lib.getDockerContentTags(repo);
     console.log(chalk.green(`Fetched tags for ${repo}:`));
-    const parseTags = start ? JSON.parse(tags).tags.filter( tag => tag.includes(start)) : JSON.parse(tags).tags 
+    const parseTags = start ? content.tags.filter( tag => tag.includes(start)) : content.tags 
     parseTags.forEach((tag, index) => {
       console.log(`- ${tag}`)
     });
-    return parseTags;
+    return content.link;
+  } catch (error) {
+    if (error.statusCode === 401) {
+      console.log(`Repo ${repo} does not exist on this Docker Hub registry account.`);
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function getMoreTags(link) {
+  try {
+    const content = await lib.getMoreDockerContentTags(link);
+    const parseTags = start ? content.tags.filter( tag => tag.includes(start)) : content.tags 
+    parseTags.forEach((tag, index) => {
+      console.log(`- ${tag}`)
+    });
+    return content.link;
   } catch (error) {
     if (error.statusCode === 401) {
       console.log(`Repo ${repo} does not exist on this Docker Hub registry account.`);
@@ -83,7 +101,19 @@ async function init() {
     if (!validateTagsArgs(args)) {
       return 1;
     }
-    await getTags(args.repo, args.start);
+    var link = await getTags(args.repo, args.start);
+    while (link) {
+      console.log(`
+      for more press enter`)
+      process.stdin.on('keypress', async function (ch, key) {
+        if (key && key.name == 'enter') {
+          process.stdin.pause();
+          link = await getMoreTags(link)
+        }
+      });
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+    }
   } else {
     console.log(helpDigest);
     console.log(helpTags);
