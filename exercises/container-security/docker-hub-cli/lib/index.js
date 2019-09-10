@@ -1,7 +1,7 @@
 const request = require('request-promise-native');
 
 module.exports = {
-  getDockerContentDigest, getDockerContentTags
+  getDockerContentDigest, getDockerContentTags, getMoreDockerContentTags
 };
 
 async function getDockerContentDigest(repo, tag) {
@@ -43,7 +43,7 @@ async function getDockerContentTags(repo) {
 
 async function getMoreDockerContentTags(link) {
   const response = await require({
-    url: tagsUrl,
+    url: link,
     resolveWithFullResponse: true,
   });
   content = JSON.parse(response.body)
